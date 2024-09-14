@@ -1,0 +1,176 @@
+import os
+import tkinter as tk
+from tkinter import messagebox, simpledialog
+
+# Archivo para almacenar usuarios y contraseñas
+FILE_USERS = "usuarios.txt"
+# Directorios para almacenar historias clínicas y producción
+HISTORIAS_CLINICAS_DIR = "historias_clinicas"
+PRODUCCION_DIR = "produccion"
+
+# Crear los directorios si no existen
+os.makedirs(HISTORIAS_CLINICAS_DIR, exist_ok=True)
+os.makedirs(PRODUCCION_DIR, exist_ok=True)
+
+
+# Función para registrar un nuevo usuario
+def registrar():
+    usuario = simpledialog.askstring("Registro", "Ingrese su nombre de usuario:")
+    contrasena = simpledialog.askstring("Registro", "Ingrese su contraseña:", show='*')
+
+    if not usuario or not contrasena:
+        messagebox.showwarning("Advertencia", "Usuario y contraseña no pueden estar vacíos.")
+        return
+
+    # Verificar si el usuario ya existe
+    if os.path.exists(FILE_USERS):
+        with open(FILE_USERS, "r") as file:
+            for linea in file:
+                nombre, _ = linea.strip().split(",")
+                if nombre == usuario:
+                    messagebox.showwarning("Advertencia", "El usuario ya existe. Intente con otro nombre.")
+                    return
+
+    # Guardar el nuevo usuario
+    with open(FILE_USERS, "a") as file:
+        file.write(f"{usuario},{contrasena}\n")
+    messagebox.showinfo("Registro", "Usuario registrado con éxito.")
+
+
+# Función para iniciar sesión
+def login():
+    usuario = simpledialog.askstring("Iniciar Sesión", "Ingrese su nombre de usuario:")
+    contrasena = simpledialog.askstring("Iniciar Sesión", "Ingrese su contraseña:", show='*')
+
+    if not usuario or not contrasena:
+        messagebox.showwarning("Advertencia", "Usuario y contraseña no pueden estar vacíos.")
+        return False
+
+    # Comprobar si el usuario existe y la contraseña es correcta
+    if os.path.exists(FILE_USERS):
+        with open(FILE_USERS, "r") as file:
+            for linea in file:
+                nombre, passw = linea.strip().split(",")
+                if nombre == usuario and passw == contrasena:
+                    messagebox.showinfo("Inicio de Sesión", "Inicio de sesión exitoso.")
+                    return True
+    messagebox.showerror("Error", "Usuario o contraseña incorrectos.")
+    return False
+
+
+# Función para mostrar el menú principal
+def menu_principal():
+    menu = tk.Toplevel()
+    menu.title("Menú Principal")
+
+    tk.Label(menu, text="--- Menú Principal ---").pack(pady=10)
+
+    tk.Button(menu, text="Historia Clínica de la Vaca", command=historia_clinica).pack(pady=5)
+    tk.Button(menu, text="Producción", command=produccion).pack(pady=5)
+    tk.Button(menu, text="Cerrar", command=menu.destroy).pack(pady=10)
+
+
+# Función para la historia clínica de la vaca
+def historia_clinica():
+    nombre_vaca = simpledialog.askstring("Historia Clínica", "Ingrese el nombre o ID de la vaca:")
+    if not nombre_vaca:
+        return
+    archivo_vaca = os.path.join(HISTORIAS_CLINICAS_DIR, f"{nombre_vaca}.txt")
+
+    historia = tk.Toplevel()
+    historia.title(f"Historia Clínica de {nombre_vaca}")
+
+    tk.Label(historia, text=f"--- Historia Clínica de {nombre_vaca} ---").pack(pady=10)
+
+    tk.Button(historia, text="Agregar registro", command=lambda: agregar_registro_clinico(archivo_vaca)).pack(pady=5)
+    tk.Button(historia, text="Ver registros", command=lambda: ver_registros_clinicos(archivo_vaca)).pack(pady=5)
+    tk.Button(historia, text="Volver", command=historia.destroy).pack(pady=10)
+
+
+# Función para agregar un registro clínico
+def agregar_registro_clinico(archivo_vaca):
+    fecha = simpledialog.askstring("Agregar Registro Clínico", "Ingrese la fecha (dd/mm/aaaa):")
+    descripcion = simpledialog.askstring("Agregar Registro Clínico", "Ingrese la descripción del estado de salud o tratamiento:")
+
+    if not fecha or not descripcion:
+        messagebox.showwarning("Advertencia", "Fecha y descripción no pueden estar vacíos.")
+        return
+
+    with open(archivo_vaca, "a") as file:
+        file.write(f"Fecha: {fecha}\nDescripción: {descripcion}\n---\n")
+    messagebox.showinfo("Registro Clínico", "Registro agregado con éxito.")
+
+
+# Función para ver los registros clínicos
+def ver_registros_clinicos(archivo_vaca):
+    if os.path.exists(archivo_vaca):
+        with open(archivo_vaca, "r") as file:
+            registros = file.read()
+        messagebox.showinfo("Registros Clínicos", registros)
+    else:
+        messagebox.showinfo("Registros Clínicos", "No hay registros para esta vaca.")
+
+
+# Función para la producción de la vaca
+def produccion():
+    nombre_vaca = simpledialog.askstring("Producción", "Ingrese el nombre o ID de la vaca:")
+    if not nombre_vaca:
+        return
+    archivo_produccion = os.path.join(PRODUCCION_DIR, f"{nombre_vaca}.txt")
+
+    produccion = tk.Toplevel()
+    produccion.title(f"Producción de {nombre_vaca}")
+
+    tk.Label(produccion, text=f"--- Producción de {nombre_vaca} ---").pack(pady=10)
+
+    tk.Button(produccion, text="Agregar registro de producción", command=lambda: agregar_registro_produccion(archivo_produccion)).pack(pady=5)
+    tk.Button(produccion, text="Ver registros de producción", command=lambda: ver_registros_produccion(archivo_produccion)).pack(pady=5)
+    tk.Button(produccion, text="Volver", command=produccion.destroy).pack(pady=10)
+
+
+# Función para agregar un registro de producción
+def agregar_registro_produccion(archivo_produccion):
+    fecha = simpledialog.askstring("Agregar Registro de Producción", "Ingrese la fecha (dd/mm/aaaa):")
+    tipo = simpledialog.askstring("Agregar Registro de Producción", "Ingrese el tipo de producción (leche, carne, doble propósito):").lower()
+
+    if tipo not in ["leche", "carne", "doble propósito"]:
+        messagebox.showwarning("Advertencia", "Tipo de producción no válido. Intente nuevamente.")
+        return
+
+    cantidad = simpledialog.askstring("Agregar Registro de Producción", "Ingrese la cantidad producida (ej. litros para leche, kg para carne):")
+
+    if not fecha or not cantidad:
+        messagebox.showwarning("Advertencia", "Fecha y cantidad no pueden estar vacíos.")
+        return
+
+    with open(archivo_produccion, "a") as file:
+        file.write(f"Fecha: {fecha}\nTipo: {tipo.capitalize()}\nCantidad: {cantidad}\n---\n")
+    messagebox.showinfo("Registro de Producción", "Registro de producción agregado con éxito.")
+
+
+# Función para ver los registros de producción
+def ver_registros_produccion(archivo_produccion):
+    if os.path.exists(archivo_produccion):
+        with open(archivo_produccion, "r") as file:
+            registros = file.read()
+        messagebox.showinfo("Registros de Producción", registros)
+    else:
+        messagebox.showinfo("Registros de Producción", "No hay registros de producción para esta vaca.")
+
+
+# Función principal para iniciar la aplicación con la interfaz gráfica
+def main():
+    root = tk.Tk()
+    root.title("Sistema de Gestión de Vacas")
+
+    tk.Label(root, text="--- Bienvenido ---").pack(pady=10)
+    tk.Button(root, text="Registrar", command=registrar).pack(pady=5)
+    tk.Button(root, text="Iniciar Sesión", command=lambda: login() and menu_principal()).pack(pady=5)
+    tk.Button(root, text="Salir", command=root.quit).pack(pady=10)
+
+    root.mainloop()
+
+
+# Ejecutar el programa
+if __name__ == "__main__":
+    main()
